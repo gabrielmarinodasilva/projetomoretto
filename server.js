@@ -1,6 +1,8 @@
 import express  from 'express'
 import cors from 'cors'
 import { PrismaClient } from '@prisma/client'
+import dotenv from 'dotenv'
+dotenv.config()
 
 const prisma = new PrismaClient()
 
@@ -10,7 +12,7 @@ app.use(cors())
 
 const autor = []
 
-app.post('/usuarios', async (req, res) => {
+app.post('/autor', async (req, res) => {
 
 
     await prisma.autor.create({
@@ -26,24 +28,26 @@ app.post('/usuarios', async (req, res) => {
 
 }) 
 
-app.get('/usuarios', async (req, res) => {
+app.get('/autor', async (req, res) => {
 
     let autor = []
 
     if(req.query){
-        autor = await prisma.autor.findMany({
-            where: {
-                nome:          req.query.nome,
-                biografia:     req.query.biografia,
+       autor = await prisma.autor.findMany({
+              where: {
+                nome: req.query.nome,
+                biografia: req.query.biografia,
                 data_nascimento: req.query.data_nascimento ? new Date(req.query.data_nascimento) : undefined,
                 nacionalidade: req.query.nacionalidade,
-            }
-        })
+              },
+              include: {
+                livros: true,  // trazer os livros do autor
+              },
+            })
 
     }else {
         const autor = await prisma.autor.findMany()
     }
-    
     
     
     
@@ -54,12 +58,12 @@ app.get('/usuarios', async (req, res) => {
 
 })
 
-app.put('/usuarios/:id', async (req, res) => {
+app.put('/autor/:id', async (req, res) => {
 
 
     await prisma.autor.update({
         where: {
-            id: req.params.id
+            id_autor: parseInt(req.params.id)
         },
         data: {
             nome:          req.body.nome,
@@ -73,7 +77,7 @@ app.put('/usuarios/:id', async (req, res) => {
 
 })
 
-app.delete('/usuarios/:id', async (req, res) => {
+app.delete('/autor/:id', async (req, res) => {
     await prisma.autor.delete({
         where: {
             id_autor: parseInt(req.params.id),
@@ -84,17 +88,17 @@ app.delete('/usuarios/:id', async (req, res) => {
 //===================================================================================================================
 // Criar um livro
 app.post('/livros', async (req, res) => {
+  console.log('Body recebido:', req.body);
   try {
     const novoLivro = await prisma.livro.create({
       data: {
         titulo: req.body.titulo,
         genero: req.body.genero,
         ano_publicacao: req.body.ano_publicacao,
-        num_paginas: req.body.num_paginas,
-        id_autor: req.body.autorId,  // <- esse campo é o nome da FK real no Prisma
+        numero_paginas : req.body.numero_paginas,
+        id_autor: req.body.id_autor,
       },
     });
-
     res.status(201).json(novoLivro);
   } catch (error) {
     console.error('Erro ao criar livro:', error);
@@ -102,14 +106,13 @@ app.post('/livros', async (req, res) => {
   }
 });
 
-
 // Listar livros com dados do autor
 app.get('/livros', async (req, res) => {
   try {
     const livros = await prisma.livro.findMany({
-  include: {
-    autor: true,  // <-- corrigido para 'Autor' com A maiúsculo
-  },
+      include: {
+        Autor: true,  // traz dados do autor junto
+      },
     });
     res.status(200).json(livros);
   } catch (error) {
@@ -119,15 +122,18 @@ app.get('/livros', async (req, res) => {
 });
 
 // Atualizar livro
-app.post('/livros', async (req, res) => {
+app.put('/livros/:id', async (req, res) => {
   try {
-    const novoLivro = await prisma.livro.create({
+    const id = parseInt(req.params.id);
+
+    const livroAtualizado = await prisma.livro.update({
+      where: { id_livro: id },
       data: {
         titulo: req.body.titulo,
         genero: req.body.genero,
         ano_publicacao: req.body.ano_publicacao,
-        numero_paginas: req.body.num_paginas,  // CORRIGIDO AQUI
-        id_autor: req.body.autorId,
+        numero_paginas : req.body.numero_paginas,
+        id_autor: req.body.id_autor,
       },
     });
 
@@ -154,8 +160,3 @@ app.delete('/livros/:id', async (req, res) => {
 
 
 app.listen(3000)
-
-/*
-banco: ibiel
-        admin
-*/

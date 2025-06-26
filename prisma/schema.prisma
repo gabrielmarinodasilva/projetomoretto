@@ -21,7 +21,7 @@ model Livro {
   titulo         String
   genero         String
   ano_publicacao Int
-  numero_paginas Int?
+  numero_paginas Int
   id_autor       Int
   Autor          Autor    @relation(fields: [id_autor], references: [id_autor], onDelete: Cascade)
 }
